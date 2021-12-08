@@ -27,7 +27,7 @@ type Customer struct {
 	ID      int64     `json:"id"`
 	Name    string    `json:"name"`
 	Phone   string    `json:"phone"`
-	Active  string    `json:"active"`
+	Active  bool      `json:"active"`
 	Created time.Time `json:"created"`
 }
 
@@ -74,6 +74,8 @@ func (s *Service) All(ctx context.Context) ([]*Customer, error) {
 		log.Println("ERROR", err)
 		return nil, ErrInternal
 	}
+
+	log.Println("items:", items)
 
 	return items, nil
 }
@@ -135,6 +137,8 @@ func (s *Service) ByID(ctx context.Context, id int64) (*Customer, error) {
 		log.Println("ERROR", err)
 		return nil, ErrInternal
 	}
+
+	log.Printf("item: %#v", item)
 
 	return item, nil
 }
