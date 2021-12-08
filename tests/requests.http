@@ -1,0 +1,20 @@
+###
+GET http://localhost:9999/customers.getById?id=1 HTTP/1.1
+
+###
+GET http://localhost:9999/customers.getAll HTTP/1.1
+
+###
+POST http://localhost:9999/customers.save?id=0&title=title&content=content&button=button&link=link HTTP/1.1
+
+###
+PUT http://localhost:9999/customers.save?id=3&title=title3&content=content3&button=button3&link=link3 HTTP/1.1
+
+###
+DELETE http://localhost:9999/customers.removeById?id=1 HTTP/1.1
+
+###
+PUT http://localhost:9999/customers.blockById?id=1 HTTP/1.1
+
+###
+PUT http://localhost:9999/customers.unblockById?id=1 HTTP/1.1
