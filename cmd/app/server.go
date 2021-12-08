@@ -65,6 +65,12 @@ func (s *Server) handleGetCustomerByID(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetAllCustomers(w http.ResponseWriter, r *http.Request) {
 	items, err := s.customersSvc.All(r.Context())
+
+	if errors.Is(err, customers.ErrNotFound) {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
 	if err != nil {
 		log.Println("ERROR", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
