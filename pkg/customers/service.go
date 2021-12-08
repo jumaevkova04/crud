@@ -38,16 +38,20 @@ func (s *Service) All(ctx context.Context) ([]*Customer, error) {
 	rows, err := s.db.QueryContext(ctx, `
 	SELECT id, name, phone, active, created FROM customers
 	`)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		log.Print("No rows")
+		return nil, ErrNotFound
+	}
+
 	if err != nil {
 		log.Println("ERROR", err)
 		return nil, ErrInternal
 	}
+
 	defer func() {
 		if cerr := rows.Close(); cerr != nil {
-			if err == nil {
-				err = cerr
-			}
-			log.Println("ERROR", cerr)
+			log.Print(cerr)
 		}
 	}()
 
