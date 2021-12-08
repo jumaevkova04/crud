@@ -36,7 +36,7 @@ func (s *Service) All(ctx context.Context) ([]*Customer, error) {
 	items := make([]*Customer, 0)
 
 	rows, err := s.db.QueryContext(ctx, `
-	SELECT id, name, phone, active, created FROM customers;
+	SELECT id, name, phone, active, created FROM customers
 	`)
 	if err != nil {
 		log.Println("ERROR", err)
@@ -76,7 +76,7 @@ func (s *Service) AllActive(ctx context.Context) ([]*Customer, error) {
 	items := make([]*Customer, 0)
 
 	rows, err := s.db.QueryContext(ctx, `
-	SELECT id, name, phone, active, created FROM customers WHERE active;
+	SELECT id, name, phone, active, created FROM customers WHERE active
 	`)
 	if err != nil {
 		log.Println("ERROR", err)
@@ -116,7 +116,7 @@ func (s *Service) ByID(ctx context.Context, id int64) (*Customer, error) {
 	item := &Customer{}
 
 	err := s.db.QueryRowContext(ctx, `
-	SELECT id, name, phone, active, created FROM customers WHERE id = $1;
+	SELECT id, name, phone, active, created FROM customers WHERE id = $1
 	`, id).Scan(&item.ID, &item.Name, &item.Phone, &item.Active, &item.Created)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -137,7 +137,7 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 
 	if item.ID == 0 {
 		err := s.db.QueryRowContext(ctx, `
-		INSERT INTO customers (name, phone) VALUES($1, $2) RETURNING id, name, phone, active, created;
+		INSERT INTO customers (name, phone) VALUES($1, $2) RETURNING id, name, phone, active, created
 		`, item.Name, item.Phone).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -150,7 +150,7 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 		}
 	} else {
 		err := s.db.QueryRowContext(ctx, `
-		UPDATE customers SET name = $1, phone = $2 RETURNING id, name, phone, active, created;
+		UPDATE customers SET name = $1, phone = $2 RETURNING id, name, phone, active, created
 		`, item.Name, item.Phone).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, sql.ErrNoRows) {
@@ -171,7 +171,7 @@ func (s *Service) RemoveByID(ctx context.Context, id int64) (*Customer, error) {
 	var customer = &Customer{}
 
 	err := s.db.QueryRowContext(ctx, `
-	DELETE FROM customers WHERE id = $1 RETURNING id, name, phone, active, created;
+	DELETE FROM customers WHERE id = $1 RETURNING id, name, phone, active, created
 	`, id).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 	if errors.Is(err, sql.ErrNoRows) {
