@@ -39,15 +39,18 @@ func (s *Service) All(ctx context.Context) ([]*Customer, error) {
 	SELECT id, name, phone, active, created FROM customers
 	`)
 
-	if errors.Is(err, sql.ErrNoRows) {
-		log.Print("No rows")
-		return nil, ErrNotFound
-	}
-
 	if err != nil {
-		log.Println("ERROR", err)
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
 		return nil, ErrInternal
 	}
+
+	defer func() {
+		if cerr := rows.Close(); cerr != nil {
+			log.Println(err)
+		}
+	}()
 
 	defer func() {
 		if cerr := rows.Close(); cerr != nil {
@@ -82,26 +85,27 @@ func (s *Service) AllActive(ctx context.Context) ([]*Customer, error) {
 	rows, err := s.db.QueryContext(ctx, `
 	SELECT id, name, phone, active, created FROM customers WHERE active
 	`)
+
 	if err != nil {
-		log.Println("ERROR", err)
+		if err == sql.ErrNoRows {
+			return nil, ErrNotFound
+		}
 		return nil, ErrInternal
 	}
+
 	defer func() {
 		if cerr := rows.Close(); cerr != nil {
-			if err == nil {
-				err = cerr
-			}
-			log.Println("ERROR", cerr)
+			log.Println(err)
 		}
 	}()
 
 	for rows.Next() {
-		var item = &Customer{}
+		item := &Customer{}
 
 		err = rows.Scan(&item.ID, &item.Name, &item.Phone, &item.Active, &item.Created)
 		if err != nil {
 			log.Println("ERROR", err)
-			return nil, ErrInternal
+			return nil, err
 		}
 		items = append(items, item)
 	}
