@@ -56,12 +56,12 @@ func (s *Service) All(ctx context.Context) ([]*Customer, error) {
 	}()
 
 	for rows.Next() {
-		var item = &Customer{}
+		item := &Customer{}
 
 		err = rows.Scan(&item.ID, &item.Name, &item.Phone, &item.Active, &item.Created)
 		if err != nil {
 			log.Println("ERROR", err)
-			return nil, ErrInternal
+			return nil, err
 		}
 		items = append(items, item)
 	}
