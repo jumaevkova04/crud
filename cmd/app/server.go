@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/jumaevkova04/crud/pkg/customers"
 )
@@ -109,11 +108,9 @@ func (s *Server) handleSaveCustomer(w http.ResponseWriter, r *http.Request) {
 	phone := r.FormValue("phone")
 
 	var customer = &customers.Customer{
-		ID:      id,
-		Name:    name,
-		Phone:   phone,
-		Active:  "",
-		Created: time.Time{},
+		ID:    id,
+		Name:  name,
+		Phone: phone,
 	}
 
 	item, err := s.customersSvc.Save(r.Context(), customer)
