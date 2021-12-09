@@ -38,8 +38,8 @@ func (s *Server) Init() {
 	s.mux.HandleFunc("/customers/{id}", s.handleGetCustomerByID).Methods(GET)
 	s.mux.HandleFunc("/customers", s.handleSaveCustomer).Methods(POST)
 	s.mux.HandleFunc("/customers/{id}", s.handleRemoveByID).Methods(DELETE)
-	s.mux.HandleFunc("/customers/block/{id}", s.handleBlockByID).Methods(POST)
-	s.mux.HandleFunc("/customers/unblock/{id}", s.handleUnblockByID).Methods(DELETE)
+	s.mux.HandleFunc("/customers/{id}/block", s.handleBlockByID).Methods(POST)
+	s.mux.HandleFunc("/customers/{id}/unblock", s.handleUnblockByID).Methods(DELETE)
 }
 
 func (s *Server) handleGetCustomerByID(w http.ResponseWriter, r *http.Request) {

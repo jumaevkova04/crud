@@ -28,7 +28,7 @@ Content-Type: "application/json"
 DELETE http://localhost:9999/customers/2 HTTP/1.1
 
 ###
-POST http://localhost:9999/customers/block/4 HTTP/1.1
+POST http://localhost:9999/customers/3/block HTTP/1.1
 
 ###
-DELETE http://localhost:9999/customers/unblock/4 HTTP/1.1
+DELETE http://localhost:9999/customers/3/unblock HTTP/1.1
