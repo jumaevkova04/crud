@@ -39,7 +39,7 @@ func (s *Server) Init() {
 	s.mux.HandleFunc("/customers", s.handleSaveCustomer).Methods(POST)
 	s.mux.HandleFunc("/customers/{id}", s.handleRemoveByID).Methods(DELETE)
 	s.mux.HandleFunc("/customers/{id}/block", s.handleBlockByID).Methods(POST)
-	s.mux.HandleFunc("/customers/{id}/unblock", s.handleUnblockByID).Methods(DELETE)
+	s.mux.HandleFunc("/customers/{id}/block", s.handleUnblockByID).Methods(DELETE)
 }
 
 func (s *Server) handleGetCustomerByID(w http.ResponseWriter, r *http.Request) {
