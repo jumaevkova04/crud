@@ -17,7 +17,6 @@ var (
 
 // Service ...
 type Service struct {
-	// db   *sql.DB
 	pool *pgxpool.Pool
 }
 
@@ -151,8 +150,8 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 		}
 	} else {
 		err := s.pool.QueryRow(ctx, `
-		UPDATE customers SET name = $1, phone = $2 RETURNING id, name, phone, active, created
-		`, item.Name, item.Phone).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
+		UPDATE customers SET name = $1, phone = $2 WHERE id = $3 RETURNING id, name, phone, active, created
+		`, item.Name, item.Phone, item.ID).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
