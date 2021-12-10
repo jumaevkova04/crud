@@ -4,6 +4,8 @@ GET http://localhost:9999/customers/3 HTTP/1.1
 ###
 GET http://localhost:9999/customers HTTP/1.1
 
+
+
 ###
 POST http://localhost:9999/customers HTTP/1.1
 Content-Type: "application/json"
@@ -11,9 +13,28 @@ Content-Type: "application/json"
 {
     "id": 0,
     "name": "Vitya",
-    "phone": "+992000000041"
+    "phone": "+992000000001",
+    "password": "password"
 }
 
+###
+POST http://localhost:9999/customers/token HTTP/1.1
+Content-Type: "application/json"
+
+{
+    "login": "+992000000001",
+    "password": "password"
+}
+
+###
+POST http://localhost:9999/customers/token/validate HTTP/1.1
+Content-Type: "application/json"
+
+{
+    "token": "a62b40782469810a452296fe07312ebdc5e6f5ff0068aa1badbd2c1a9682a2716fb52593a2f871a00ce67525cf21cb8ea8a4bf777b268f27dd5a9a5cc5db47f99510cc0aaad06d22c87671321713e6c0850be9e0df6d6d016ecfc2b4dbc86750b77e1b52b76556c96193b5b939db2862bd243130a2edd71f358beee406c63abc8569bb0ae57245aa734f8439fe89766c98fc4ab22fe18332a423e228d470cfdd5e7d9adf883c0458e232dd13e0f7a11e7c788f6637bb7c88f41efa37c2dd6d906645faf8671abffdd7f6935b717a22231f27c0b04490861ad81fbddc0048ca275d030306d93879931109ac7936517c90bc503bcc86bec7aba78d0db08aec885f"
+}
+
+    "token": "04533db3c5ef06a26bdfb056e9f169d838de2e579ec234d988a289fb8e4c02f29be9e0607a4d8fc99bb2849988c24e7332d2d2e479dbb9445cee5e3ff5a13d77dd62484b3c031dce7ebf7da9961baf16f477b64ba737cc1862e708639f9e8ceb46e352e8da08ecf167ebeb10135df885ea7ef75c8963e7589bf422b19b73c5be924a7d140045d1614acf9d138042d0d2ab5d5966fa9ab968366f41b5c4471b91c739998e47c27de30bd7c352c5b5046e37e66ee4c0e9e0515e445f8a924d33b30a81fb53831b7355cbb77ae32d6ff5bf9eaf48bfe6a0bae9b9c030d2356aa45ad0a27a0396428988df8b12fcb4295d35fa8673413f9cdcce8bcb716d8ee5aa70"
 ###
 POST http://localhost:9999/customers HTTP/1.1
 Content-Type: "application/json"

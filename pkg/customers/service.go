@@ -2,17 +2,23 @@ package customers
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"log"
 	"time"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var (
-	ErrNotFound = errors.New("item not found")
-	ErrInternal = errors.New("internal error")
+	ErrNotFound        = errors.New("item not found")
+	ErrInternal        = errors.New("internal error")
+	ErrNoSuchUser      = errors.New("no such user")
+	ErrInvalidPassword = errors.New("invalid password")
+	ErrExpired         = errors.New("expired")
 )
 
 // Service ...
@@ -27,11 +33,20 @@ func NewService(pool *pgxpool.Pool) *Service {
 
 // Customer ...
 type Customer struct {
-	ID      int64     `json:"id"`
-	Name    string    `json:"name"`
-	Phone   string    `json:"phone"`
-	Active  bool      `json:"active"`
-	Created time.Time `json:"created"`
+	ID       int64     `json:"id"`
+	Name     string    `json:"name"`
+	Phone    string    `json:"phone"`
+	Password string    `json:"password"`
+	Active   bool      `json:"active"`
+	Created  time.Time `json:"created"`
+}
+
+// CustomersToken ...
+type CustomersToken struct {
+	Token      string    `json:"token"`
+	CustomerID int64     `json:"customer_id"`
+	Expire     time.Time `json:"expire"`
+	Created    time.Time `json:"created"`
 }
 
 // All ...
@@ -136,10 +151,16 @@ func (s *Service) ByID(ctx context.Context, id int64) (*Customer, error) {
 func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 	var customer = &Customer{}
 
+	hash, err := bcrypt.GenerateFromPassword([]byte(item.Password), bcrypt.DefaultCost)
+	if err != nil {
+		log.Println("ERROR", err)
+		return nil, ErrInternal
+	}
+
 	if item.ID == 0 {
 		err := s.pool.QueryRow(ctx, `
-		INSERT INTO customers (name, phone) VALUES($1, $2) RETURNING id, name, phone, active, created
-		`, item.Name, item.Phone).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
+		INSERT INTO customers (name, phone, password) VALUES($1, $2, $3) RETURNING id, name, phone, active, created
+		`, item.Name, item.Phone, hash).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -151,8 +172,8 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 		}
 	} else {
 		err := s.pool.QueryRow(ctx, `
-		UPDATE customers SET name = $1, phone = $2 WHERE id = $3 RETURNING id, name, phone, active, created
-		`, item.Name, item.Phone, item.ID).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
+		UPDATE customers SET name = $1, phone = $2,  password = $3 WHERE id = $4 RETURNING id, name, phone, active, created
+		`, item.Name, item.Phone, hash, item.ID).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -225,4 +246,70 @@ func (s *Service) UnblockByID(ctx context.Context, id int64) (*Customer, error) 
 	}
 
 	return customer, nil
+}
+
+// TokenForCustomer ...
+func (s *Service) TokenForCustomer(ctx context.Context, phone string, password string) (token string, err error) {
+	var hash string
+	var id int64
+
+	err = s.pool.QueryRow(ctx, `SELECT id, password FROM customers WHERE phone = $1`, phone).Scan(&id, &hash)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", ErrNoSuchUser
+	}
+
+	if err != nil {
+		log.Println("ERROR", err)
+		return "", ErrInternal
+	}
+
+	err = bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		log.Println("ERROR", err)
+		return "", ErrInvalidPassword
+	}
+
+	buffer := make([]byte, 256)
+	n, err := rand.Read(buffer)
+	if n != len(buffer) || err != nil {
+		log.Println("ERROR", err)
+		return "", ErrInternal
+	}
+
+	token = hex.EncodeToString(buffer)
+	_, err = s.pool.Exec(ctx, `INSERT INTO customers_tokens (token, customer_id) VALUES ($1, $2)`, token, id)
+	if err != nil {
+		log.Println("ERROR", err)
+		return "", ErrInternal
+	}
+
+	return token, nil
+}
+
+// AuthenticateCustomer ...
+func (s *Service) AuthenticateCustomer(ctx context.Context, token string) (id int64, err error) {
+	var expire time.Time
+	err = s.pool.QueryRow(ctx, `SELECT customer_id, expire FROM customers_tokens WHERE token = $1`, token).Scan(&id, &expire)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		log.Println("ERROR", err)
+		return 0, ErrNoSuchUser
+	}
+
+	if err != nil {
+		log.Println("ERROR", err)
+		return 0, ErrInternal
+	}
+
+	if IsTimePassed(time.Now().Add(-time.Hour), expire) {
+		return 0, ErrExpired
+	}
+
+	return id, nil
+}
+
+// IsTimePassed - if time passed returns true
+func IsTimePassed(check, date time.Time) bool {
+	return check.After(date)
 }

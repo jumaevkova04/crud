@@ -37,7 +37,7 @@ const (
 
 func (s *Server) Init() {
 	s.mux.Use(middleware.Logger)
-	s.mux.Use(middleware.Basic(s.securitySvc.Auth))
+	// s.mux.Use(middleware.Basic(s.securitySvc.Auth))
 	// s.mux.Use(middleware.CheckHeader("Content-Type", "application/json"))
 	// s.mux.Handle("/customers", middleware.Logger(http.HandlerFunc(s.handleGetAllCustomers))).Methods(GET)
 
@@ -48,6 +48,8 @@ func (s *Server) Init() {
 	s.mux.HandleFunc("/customers/active", s.handleGetAllActiveCustomers).Methods(GET)
 	s.mux.HandleFunc("/customers/{id}", s.handleGetCustomerByID).Methods(GET)
 	s.mux.HandleFunc("/customers", s.handleSaveCustomer).Methods(POST)
+	s.mux.HandleFunc("/customers/token", s.handleTokenForCustomer).Methods(POST)
+	s.mux.HandleFunc("/customers/token/validate", s.handleAuthenticateCustomer).Methods(POST)
 	s.mux.HandleFunc("/customers/{id}", s.handleRemoveByID).Methods(DELETE)
 	s.mux.HandleFunc("/customers/{id}/block", s.handleBlockByID).Methods(POST)
 	s.mux.HandleFunc("/customers/{id}/block", s.handleUnblockByID).Methods(DELETE)
@@ -158,7 +160,6 @@ func (s *Server) handleRemoveByID(w http.ResponseWriter, r *http.Request) {
 	err = sendResponse(w, item)
 	if err != nil {
 		log.Println("ERROR", err)
-		return
 	}
 }
 
@@ -181,7 +182,6 @@ func (s *Server) handleBlockByID(w http.ResponseWriter, r *http.Request) {
 	err = sendResponse(w, item)
 	if err != nil {
 		log.Println("ERROR", err)
-		return
 	}
 }
 
@@ -204,7 +204,66 @@ func (s *Server) handleUnblockByID(w http.ResponseWriter, r *http.Request) {
 	err = sendResponse(w, item)
 	if err != nil {
 		log.Println("ERROR", err)
+	}
+}
+
+func (s *Server) handleTokenForCustomer(w http.ResponseWriter, r *http.Request) {
+	var login struct {
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&login)
+	if err != nil {
+		log.Println("ERROR", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
 		return
+	}
+
+	token, err := s.customersSvc.TokenForCustomer(r.Context(), login.Login, login.Password)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]string{"token": token}
+
+	err = sendResponse(w, response)
+	if err != nil {
+		log.Println("ERROR", err)
+	}
+}
+
+func (s *Server) handleAuthenticateCustomer(w http.ResponseWriter, r *http.Request) {
+	var c *customers.CustomersToken
+	err := json.NewDecoder(r.Body).Decode(&c)
+	if err != nil {
+		log.Println("ERROR", err)
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+
+	var response map[string]interface{}
+
+	id, err := s.customersSvc.AuthenticateCustomer(r.Context(), c.Token)
+	response = map[string]interface{}{"status": "ok", "customerId": id}
+
+	if errors.Is(err, customers.ErrNoSuchUser) {
+		response = map[string]interface{}{"status": "fail", "reason": "not found"}
+	}
+
+	if errors.Is(err, customers.ErrExpired) {
+		response = map[string]interface{}{"status": "fail", "reason": "expired"}
+	}
+
+	// if err != nil {
+	// 	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	// 	return
+	// }
+
+	err = sendResponse(w, response)
+	if err != nil {
+		log.Println("ERROR", err)
 	}
 }
 
