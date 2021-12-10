@@ -177,7 +177,7 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 	} else {
 		err := s.pool.QueryRow(ctx, `
 		UPDATE customers SET name = $1, phone = $2,  password = $3 WHERE id = $4 RETURNING id, name, phone, active, created
-		`, item.Name, item.Phone, hash, item.ID).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
+		`, item.Name, item.Phone, password, item.ID).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
