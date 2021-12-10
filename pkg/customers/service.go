@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
+	"os"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -154,7 +155,8 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(item.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("ERROR", err)
-		return nil, ErrInternal
+		os.Exit(1)
+		// return nil, ErrInternal
 	}
 
 	password := string(hash)
