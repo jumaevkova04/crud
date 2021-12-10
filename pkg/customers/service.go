@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"log"
-	"os"
 	"time"
 
 	"github.com/jackc/pgx/v4"
@@ -155,8 +154,7 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(item.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Println("ERROR", err)
-		os.Exit(1)
-		// return nil, ErrInternal
+		return nil, ErrInternal
 	}
 
 	password := string(hash)
@@ -164,7 +162,6 @@ func (s *Service) Save(ctx context.Context, item *Customer) (*Customer, error) {
 	if item.ID == 0 {
 		err := s.pool.QueryRow(ctx, `
 		INSERT INTO customers (name, phone, password) VALUES($1, $2, $3) RETURNING id, name, phone, active, created
-		ON CONFLICT (phone)  DO UPDATE SET name = excluded.name
 		`, item.Name, item.Phone, password).Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Active, &customer.Created)
 
 		if errors.Is(err, pgx.ErrNoRows) {

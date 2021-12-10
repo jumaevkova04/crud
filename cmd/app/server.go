@@ -48,11 +48,13 @@ func (s *Server) Init() {
 	s.mux.HandleFunc("/customers/active", s.handleGetAllActiveCustomers).Methods(GET)
 	s.mux.HandleFunc("/customers/{id}", s.handleGetCustomerByID).Methods(GET)
 	s.mux.HandleFunc("/customers", s.handleSaveCustomer).Methods(POST)
-	s.mux.HandleFunc("/customers/token", s.handleTokenForCustomer).Methods(POST)
-	s.mux.HandleFunc("/customers/token/validate", s.handleAuthenticateCustomer).Methods(POST)
 	s.mux.HandleFunc("/customers/{id}", s.handleRemoveByID).Methods(DELETE)
 	s.mux.HandleFunc("/customers/{id}/block", s.handleBlockByID).Methods(POST)
 	s.mux.HandleFunc("/customers/{id}/block", s.handleUnblockByID).Methods(DELETE)
+
+	s.mux.HandleFunc("/api/customers", s.handleSaveCustomer).Methods(POST)
+	s.mux.HandleFunc("/api/customers/token", s.handleTokenForCustomer).Methods(POST)
+	s.mux.HandleFunc("/api/customers/token/validate", s.handleAuthenticateCustomer).Methods(POST)
 }
 
 func (s *Server) handleGetCustomerByID(w http.ResponseWriter, r *http.Request) {
