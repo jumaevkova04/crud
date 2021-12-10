@@ -13,7 +13,7 @@ Content-Type: "application/json"
 {
     "id": 0,
     "name": "Vitya",
-    "phone": "+992000000001",
+    "phone": "+992000000031",
     "password": "password"
 }
 
