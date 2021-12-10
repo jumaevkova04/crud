@@ -11,7 +11,7 @@ func Basic(checkAuth func(string, string) bool) func(handler http.Handler) http.
 	return func(handler http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-			auth := strings.SplitN(r.Header.Get("Authorization"), "", 2)
+			auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 
 			if len(auth) != 2 || auth[0] != "Basic" {
 				http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
