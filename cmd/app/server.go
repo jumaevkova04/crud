@@ -8,18 +8,21 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
+	"github.com/jumaevkova04/crud/cmd/app/middleware"
 	"github.com/jumaevkova04/crud/pkg/customers"
+	"github.com/jumaevkova04/crud/pkg/security"
 )
 
 // Server ...
 type Server struct {
 	mux          *mux.Router
 	customersSvc *customers.Service
+	securitySvc  *security.Service
 }
 
 // NewServer ...
-func NewServer(mux *mux.Router, customersSvc *customers.Service) *Server {
-	return &Server{mux: mux, customersSvc: customersSvc}
+func NewServer(mux *mux.Router, customersSvc *customers.Service, securitySvc *security.Service) *Server {
+	return &Server{mux: mux, customersSvc: customersSvc, securitySvc: securitySvc}
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +36,14 @@ const (
 )
 
 func (s *Server) Init() {
+	s.mux.Use(middleware.Logger)
+	s.mux.Use(middleware.Basic(s.securitySvc.Auth))
+	s.mux.Use(middleware.CheckHeader("Content-Type", "application/json"))
+	// s.mux.Handle("/customers", middleware.Logger(http.HandlerFunc(s.handleGetAllCustomers))).Methods(GET)
+
+	// chMd := middleware.CheckHeader("Content-Type", "application/json")
+	// s.mux.Handle("/customers", chMd(http.HandlerFunc(s.handleGetAllCustomers))).Methods(GET)
+
 	s.mux.HandleFunc("/customers", s.handleGetAllCustomers).Methods(GET)
 	s.mux.HandleFunc("/customers/active", s.handleGetAllActiveCustomers).Methods(GET)
 	s.mux.HandleFunc("/customers/{id}", s.handleGetCustomerByID).Methods(GET)
