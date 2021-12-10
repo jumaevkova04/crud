@@ -245,16 +245,20 @@ func (s *Server) handleAuthenticateCustomer(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	var response map[string]interface{}
+	// var response map[string]interface{}
+	// var status int
 
 	id, err := s.customersSvc.AuthenticateCustomer(r.Context(), c.Token)
-	response = map[string]interface{}{"status": "ok", "customerId": id}
+	status := http.StatusBadRequest
+	response := map[string]interface{}{"status": "ok", "customerId": id}
 
 	if errors.Is(err, customers.ErrNoSuchUser) {
+		status = http.StatusNotFound
 		response = map[string]interface{}{"status": "fail", "reason": "not found"}
 	}
 
 	if errors.Is(err, customers.ErrExpired) {
+		status = http.StatusBadRequest
 		response = map[string]interface{}{"status": "fail", "reason": "expired"}
 	}
 
@@ -263,6 +267,7 @@ func (s *Server) handleAuthenticateCustomer(w http.ResponseWriter, r *http.Reque
 	// 	return
 	// }
 
+	w.WriteHeader(status)
 	err = sendResponse(w, response)
 	if err != nil {
 		log.Println("ERROR", err)
@@ -278,7 +283,6 @@ func sendResponse(w http.ResponseWriter, response interface{}) error {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(data)
 	if err != nil {
 		log.Println("ERROR", err)
