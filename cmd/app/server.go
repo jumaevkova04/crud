@@ -38,7 +38,7 @@ const (
 func (s *Server) Init() {
 	s.mux.Use(middleware.Logger)
 	s.mux.Use(middleware.Basic(s.securitySvc.Auth))
-	s.mux.Use(middleware.CheckHeader("Content-Type", "application/json"))
+	// s.mux.Use(middleware.CheckHeader("Content-Type", "application/json"))
 	// s.mux.Handle("/customers", middleware.Logger(http.HandlerFunc(s.handleGetAllCustomers))).Methods(GET)
 
 	// chMd := middleware.CheckHeader("Content-Type", "application/json")
